@@ -1,0 +1,2 @@
+timestamp,size,seed,mode,workers,sequential_seconds,parallel_seconds,speedup,checksum,result_match
+2026-09-29T14:43:35+07:00,500,7,both,4,5.957064,1.826234,3.261939,-156346.599857,yes

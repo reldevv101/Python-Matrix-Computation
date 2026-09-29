@@ -9,6 +9,9 @@ description = "Sequential matrix multiplication benchmark"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.optional-dependencies]
+distributed = ["mpi4py>=4.0"]
+
 [project.scripts]
 matrix-benchmark = "matrix_benchmark.cli:main"
 
