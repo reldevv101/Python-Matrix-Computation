@@ -14,6 +14,17 @@ class SequentialMultiplyTests(unittest.TestCase):
         self.assertEqual(result, [[8.0]])
         self.assertGreaterEqual(elapsed, 0.0)
 
+    def test_multiply_reports_row_progress(self) -> None:
+        calls: list[tuple[int, int]] = []
+
+        multiply(
+            [[1.0], [2.0]],
+            [[3.0]],
+            progress=lambda completed, total: calls.append((completed, total)),
+        )
+
+        self.assertEqual(calls, [(1, 2), (2, 2)])
+
     def test_checksum(self) -> None:
         self.assertEqual(matrix_checksum([[1.5, 2.5], [3.0, -1.0]]), 6.0)
 

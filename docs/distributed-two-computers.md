@@ -13,7 +13,7 @@ Di master dan worker, lakukan hal yang sama:
 3. Letakkan salinan project pada path yang sama, misalnya:
 
    ```text
-   C:\Users\USER\Documents\Codex\Python Matrix Computation
+   C:\MPI\Python Matrix Computation
    ```
 
 4. Buka PowerShell dan verifikasi:
@@ -24,35 +24,56 @@ Di master dan worker, lakukan hal yang sama:
 
 Perintah verifikasi tersebut dilakukan lokal pada masing-masing komputer.
 
-## 2. Catat nama komputer
+## 2. Tentukan master dan worker
 
-Di masing-masing komputer, jalankan:
+Pilih satu komputer untuk menjalankan perintah `mpiexec`. Komputer inilah yang
+disebut **master**. Master membuat matriks awal, membagi pekerjaan, dan
+menampilkan hasil akhir. Komputer kedua disebut **worker**; ia hanya
+mengerjakan baris matriks yang diterimanya dari master.
+
+Untuk praktik proyek ini, gunakan komputer yang sekarang Anda pakai sebagai
+master. Dari pengujian sebelumnya, namanya adalah:
+
+```text
+DESKTOP-KMSGI0H
+```
+
+Jadi pengaturannya adalah:
+
+| Peran | Komputer | Tugas |
+| --- | --- | --- |
+| Master | `DESKTOP-KMSGI0H` | Menjalankan `mpiexec` dan menampilkan hasil |
+| Worker | Komputer kedua | Menerima dan menghitung bagian matriks |
+
+## 3. Catat nama worker
+
+Di komputer kedua saja, buka PowerShell lalu jalankan:
 
 ```powershell
 hostname
 ```
 
-Catat hasilnya sebagai `NAMA_MASTER` dan `NAMA_WORKER`. Dari master, pastikan
-worker dapat ditemukan di jaringan:
+Misalnya keluarannya adalah `LAB-PC-02`. Maka `LAB-PC-02` adalah nama worker.
+Dari master, pastikan worker dapat ditemukan di jaringan:
 
 ```powershell
-ping NAMA_WORKER
+ping LAB-PC-02
 ```
 
-## 3. Uji dua komputer
+## 4. Uji dua komputer
 
-Di master, buka PowerShell pada folder project dan jalankan perintah berikut.
-Ganti kedua placeholder dengan nama komputer Anda:
+Di **master** (`DESKTOP-KMSGI0H`), buka PowerShell pada folder project. Jika
+nama worker adalah `LAB-PC-02`, jalankan:
 
 ```powershell
-mpiexec /hosts 2 NAMA_MASTER 1 NAMA_WORKER 1 /wdir "C:\Users\USER\Documents\Codex\Python Matrix Computation" py -3 -m mpi4py.bench helloworld
+mpiexec /hosts 2 DESKTOP-KMSGI0H 1 LAB-PC-02 1 /wdir "C:\MPI\Python Matrix Computation" py -3 -m mpi4py.bench helloworld
 ```
 
 Jika berhasil, keluaran akan menyebut dua proses dengan nama komputer yang
 berbeda. Baru kemudian jalankan benchmark:
 
 ```powershell
-mpiexec /hosts 2 NAMA_MASTER 1 NAMA_WORKER 1 /wdir "C:\Users\USER\Documents\Codex\Python Matrix Computation" py -3 mpi_benchmark.py --size 250 --seed 7
+mpiexec /hosts 2 DESKTOP-KMSGI0H 1 LAB-PC-02 1 /wdir "C:\MPI\Python Matrix Computation" py -3 mpi_benchmark.py --size 250 --seed 7
 ```
 
 Baris `Komputer proses` pada hasil benchmark harus memuat nama master dan

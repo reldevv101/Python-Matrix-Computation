@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from time import perf_counter
 
 Matrix = list[list[float]]
@@ -21,20 +22,32 @@ def _validate_matrices(left: Matrix, right: Matrix) -> None:
         raise ValueError("Jumlah kolom matriks kiri harus sama dengan jumlah baris matriks kanan.")
 
 
-def multiply(left: Matrix, right: Matrix) -> Matrix:
+def multiply(
+    left: Matrix,
+    right: Matrix,
+    progress: Callable[[int, int], None] | None = None,
+) -> Matrix:
     """Return `left x right` using one sequential process."""
     _validate_matrices(left, right)
     right_columns = list(zip(*right))
-    return [
-        [sum(a * b for a, b in zip(left_row, right_column)) for right_column in right_columns]
-        for left_row in left
-    ]
+    result: Matrix = []
+    for row_index, left_row in enumerate(left, start=1):
+        result.append(
+            [sum(a * b for a, b in zip(left_row, right_column)) for right_column in right_columns]
+        )
+        if progress is not None:
+            progress(row_index, len(left))
+    return result
 
 
-def timed_multiply(left: Matrix, right: Matrix) -> tuple[Matrix, float]:
+def timed_multiply(
+    left: Matrix,
+    right: Matrix,
+    progress: Callable[[int, int], None] | None = None,
+) -> tuple[Matrix, float]:
     """Multiply two matrices and return the result with elapsed seconds."""
     started_at = perf_counter()
-    result = multiply(left, right)
+    result = multiply(left, right, progress)
     return result, perf_counter() - started_at
 
 

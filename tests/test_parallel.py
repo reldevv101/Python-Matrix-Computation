@@ -18,3 +18,15 @@ class ParallelMultiplyTests(unittest.TestCase):
     def test_rejects_invalid_worker_count(self) -> None:
         with self.assertRaises(ValueError):
             parallel_multiply([[1.0]], [[1.0]], workers=0)
+
+    def test_parallel_reports_completed_rows(self) -> None:
+        calls: list[tuple[int, int]] = []
+
+        parallel_multiply(
+            [[1.0], [2.0]],
+            [[3.0]],
+            workers=2,
+            progress=lambda completed, total: calls.append((completed, total)),
+        )
+
+        self.assertEqual(calls[-1], (2, 2))

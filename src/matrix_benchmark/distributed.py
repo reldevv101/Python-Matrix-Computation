@@ -7,6 +7,7 @@ import random
 from collections.abc import Sequence
 
 from .sequential import Matrix, _validate_matrices, matrix_checksum
+from .presentation import print_matrix, print_title
 
 
 def _import_mpi():
@@ -86,6 +87,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--size", type=int, default=100, help="Ukuran N pada matriks N x N.")
     parser.add_argument("--seed", type=int, default=42, help="Seed data acak.")
+    parser.add_argument(
+        "--show-result",
+        action="store_true",
+        help="Tampilkan matriks hasil. Disarankan hanya untuk ukuran kecil.",
+    )
+    parser.add_argument(
+        "--display-limit", type=int, default=10,
+        help="Ukuran maksimum untuk --show-result (default: 10).",
+    )
     return parser
 
 
@@ -98,6 +108,13 @@ def main() -> None:
     args = build_parser().parse_args()
     if args.size <= 0:
         raise SystemExit("--size harus berupa bilangan bulat positif.")
+    if args.display_limit <= 0:
+        raise SystemExit("--display-limit harus berupa bilangan bulat positif.")
+    if args.show_result and args.size > args.display_limit:
+        raise SystemExit(
+            "Ukuran matriks terlalu besar untuk ditampilkan. "
+            "Naikkan --display-limit atau gunakan --size yang lebih kecil."
+        )
 
     communicator = MPI.COMM_WORLD
     rank = communicator.Get_rank()
@@ -112,10 +129,14 @@ def main() -> None:
     result, elapsed_seconds = distributed_multiply(left, right)
     process_hosts = communicator.gather(MPI.Get_processor_name(), root=0)
     if rank == 0 and result is not None and elapsed_seconds is not None:
-        print("Matrix Computation Benchmark (Distributed MPI)")
-        print(f"Ukuran matriks : {args.size} x {args.size}")
-        print(f"Jumlah proses  : {communicator.Get_size()}")
-        print(f"Seed           : {args.seed}")
-        print(f"Waktu total    : {elapsed_seconds:.6f} detik")
-        print(f"Checksum hasil : {matrix_checksum(result):.6f}")
-        print(f"Komputer proses: {', '.join(dict.fromkeys(process_hosts))}")
+        print_title("MATRIX COMPUTATION BENCHMARK (DISTRIBUTED MPI)")
+        print("Konfigurasi")
+        print(f"  Ukuran matriks : {args.size} x {args.size}")
+        print(f"  Jumlah proses  : {communicator.Get_size()}")
+        print(f"  Seed           : {args.seed}")
+        print("\nHasil distributed")
+        print(f"  Waktu total    : {elapsed_seconds:.6f} detik")
+        print(f"  Checksum       : {matrix_checksum(result):.6f}")
+        print(f"  Komputer proses: {', '.join(dict.fromkeys(process_hosts))}")
+        if args.show_result:
+            print_matrix(result, "Matriks hasil (A x B)")

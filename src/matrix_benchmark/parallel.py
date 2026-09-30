@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+from collections.abc import Callable
 from time import perf_counter
 
 from .sequential import Matrix, _validate_matrices
@@ -29,7 +30,12 @@ def _split_rows(matrix: Matrix, chunks: int) -> list[Matrix]:
     return [matrix[index : index + chunk_size] for index in range(0, len(matrix), chunk_size)]
 
 
-def parallel_multiply(left: Matrix, right: Matrix, workers: int) -> Matrix:
+def parallel_multiply(
+    left: Matrix,
+    right: Matrix,
+    workers: int,
+    progress: Callable[[int, int], None] | None = None,
+) -> Matrix:
     """Return `left x right` by dividing left-matrix rows among processes."""
     _validate_matrices(left, right)
     if workers <= 0:
@@ -45,13 +51,24 @@ def parallel_multiply(left: Matrix, right: Matrix, workers: int) -> Matrix:
         initializer=_set_right_columns,
         initargs=(right_columns,),
     ) as pool:
-        result_chunks = pool.map(_multiply_rows, row_chunks)
+        result_chunks: list[Matrix] = []
+        completed_rows = 0
+        for chunk, result_chunk in zip(row_chunks, pool.imap(_multiply_rows, row_chunks)):
+            result_chunks.append(result_chunk)
+            completed_rows += len(chunk)
+            if progress is not None:
+                progress(completed_rows, len(left))
 
     return [row for chunk in result_chunks for row in chunk]
 
 
-def timed_parallel_multiply(left: Matrix, right: Matrix, workers: int) -> tuple[Matrix, float]:
+def timed_parallel_multiply(
+    left: Matrix,
+    right: Matrix,
+    workers: int,
+    progress: Callable[[int, int], None] | None = None,
+) -> tuple[Matrix, float]:
     """Multiply in parallel and return the result with elapsed seconds."""
     started_at = perf_counter()
-    result = parallel_multiply(left, right, workers)
+    result = parallel_multiply(left, right, workers, progress)
     return result, perf_counter() - started_at
